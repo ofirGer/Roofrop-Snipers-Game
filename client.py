@@ -56,7 +56,7 @@ class GameClient:
                 "gun": gun_data
             }
 
-            self.client_socket.send(pickle.dumps(combined_data))
+            self.pro.send_data(combined_data)
 
             enemy_data = self.pro.get_data()
             if "player" in enemy_data:
