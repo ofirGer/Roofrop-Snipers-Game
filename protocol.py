@@ -6,24 +6,18 @@ class Protocol:
         self.socket = socket
 
     def get_data(self):
-        data = b''
-        while True:
-            try:
-                packet = self.socket.recv(4096)
-                if not packet:
-                    break
-                data += packet
-                try:
-                    return pickle.loads(data)
-                except pickle.UnpicklingError:
-                    continue
-            except Exception as e:
-                print(f"Receiving error: {e}")
-                break
-        return None
-
-    def send_data(self, obj):
         try:
-            self.socket.sendall(pickle.dumps(obj))
+            length = self.socket.recv(4).decode()
+            data = self.socket.recv(int(length))
+            return data
+        except Exception as e:
+            print(f"Receiving error: {e}")
+            return None
+
+    def send_data(self, data):
+        try:
+            length = str(len(data))
+            zfill_length = length.zfill(4).encode()
+            self.socket.sendall(zfill_length + data)
         except Exception as e:
             print(f"Sending error: {e}")

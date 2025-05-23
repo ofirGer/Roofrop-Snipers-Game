@@ -1,3 +1,4 @@
+import pickle
 import socket
 import threading
 import protocol
@@ -21,7 +22,7 @@ class GameServer:
         print(f"Player {player_id} connected.")
 
         pro = protocol.Protocol(client_socket)
-        client_socket.send(str(player_id).encode())
+        pro.send_data(str(player_id).encode())
 
         self.connected_clients[player_id] = client_socket
         if all(self.connected_clients):
@@ -30,21 +31,21 @@ class GameServer:
         self.connected_event.wait()
 
         try:
-            pro.send_data("start")
+            pro.send_data("start".encode())
         except Exception as e:
             print(f"Failed to send start to player {player_id}: {e}")
             return
 
         try:
             while True:
-                data = pro.get_data()
+                data = pickle.loads(pro.get_data())
                 if data is None:
                     print(f"Player {player_id} disconnected.")
                     break
 
                 self.players_data[player_id] = data
                 enemy_data = self.players_data[1 - player_id]
-                pro.send_data(enemy_data)
+                pro.send_data(pickle.dumps(enemy_data))
 
         except Exception as e:
             print(f"Player {player_id} caused error: {e}")
