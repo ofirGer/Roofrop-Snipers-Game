@@ -48,32 +48,32 @@ class GameClient:
             self.running = False
 
     def send_and_receive_data(self):
-        #try:
-        player_data = self.local_player.get_data()
-        gun_data = self.local_gun.get_data()
-        combined_data = {
-            "player": player_data,
-            "gun": gun_data
-        }
+            try:
+                player_data = self.local_player.get_data()
+                gun_data = self.local_gun.get_data()
+                combined_data = {
+                    "player": player_data,
+                    "gun": gun_data
+                }
 
-        self.pro.send_data(pickle.dumps(combined_data))
+                self.pro.send_data(pickle.dumps(combined_data))
 
-        enemy_data = pickle.loads(self.pro.get_data())
-        if "player" in enemy_data:
-            original_x = enemy_data["player"]["x"]
-            self.enemy_player.x = config.WIDTH - original_x - self.enemy_player.width
-            self.enemy_player.y = enemy_data["player"]["y"]
-            self.enemy_player.lean_angle = -enemy_data["player"]["lean_angle"]
+                enemy_data = pickle.loads(self.pro.get_data())
+                if "player" in enemy_data:
+                    original_x = enemy_data["player"]["x"]
+                    self.enemy_player.x = config.WIDTH - original_x - self.enemy_player.width
+                    self.enemy_player.y = enemy_data["player"]["y"]
+                    self.enemy_player.lean_angle = -enemy_data["player"]["lean_angle"]
 
-        if "gun" in enemy_data:
-            self.enemy_gun.angle = enemy_data["gun"]["angle"]
-            self.enemy_gun.bullet_angle = -enemy_data["gun"]["bullet_angle"]
-            self.enemy_gun.firing = enemy_data["gun"]["firing"]
-            self.enemy_gun.current_bullet_frame = enemy_data["gun"]["bullet_frame"]
+                if "gun" in enemy_data:
+                    self.enemy_gun.angle = enemy_data["gun"]["angle"]
+                    self.enemy_gun.bullet_angle = -enemy_data["gun"]["bullet_angle"]
+                    self.enemy_gun.firing = enemy_data["gun"]["firing"]
+                    self.enemy_gun.current_bullet_frame = enemy_data["gun"]["bullet_frame"]
 
-        #\except Exception as e:
-            #print(f"Connection error: {e}")
-            #self.running = False
+            except Exception as e:
+                print(f"Connection error: {e}")
+                self.running = False
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -109,8 +109,7 @@ class GameClient:
             self.update_game_logic()
             self.send_and_receive_data()
             self.draw()
-            if self.local_player.check_hit_by_bullet(self.enemy_gun):
-                print("You got hit!")
+            self.local_player.check_hit_by_bullet(self.enemy_gun)
         pygame.quit()
 
 if __name__ == "__main__":
