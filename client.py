@@ -85,6 +85,7 @@ class GameClient:
     def update_game_logic(self):
         self.local_player.apply_movement()
         self.local_gun.apply_gun_movement()
+        self.local_player.handle_collision_with(self.enemy_player)
 
     def draw(self):
         self.screen.fill(config.BACKGROUND_COLOR)

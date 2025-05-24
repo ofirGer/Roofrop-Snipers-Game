@@ -11,15 +11,15 @@ class Player:
         self.y = y - self.height  # Adjust to sit on the roof
         self.vel_y = 0
         self.vel_x = 0  # Horizontal velocity
-        self.gravity = 1
-        self.jump_strength = -18
+        self.gravity = 0.8
+        self.jump_strength = -16
         self.on_ground = True
 
         # Leaning mechanics
         self.lean_angle = 0  # Starts upright
         self.lean_speed = 0  # Initial lean speed
         self.lean_direction = 1  # 1 = right, -1 = left
-        self.max_lean = 50  # Max tilt angle
+        self.max_lean = 100  # Max tilt angle
         self.change_max_angle = False
         self.recently_hit = False
         self.hit_cooldown = 0  # frames remaining until allowed to be hit again
@@ -33,7 +33,7 @@ class Player:
             self.vel_x = jump_direction * abs(self.lean_angle) * 0.2  # Horizontal movement smoothened
             self.on_ground = False
             # reset leaning
-            self.max_lean = abs(self.lean_angle) + 30
+            self.max_lean = abs(self.lean_angle) + 40
             if self.lean_angle == 0:
                 self.lean_speed = 1
             else:
@@ -58,7 +58,7 @@ class Player:
 
     def lean_and_move(self):
         if self.change_max_angle and abs(self.lean_angle) < 10:
-            self.max_lean *= 0.8
+            self.max_lean *= 0.6
             self.change_max_angle = False
 
         if self.on_ground:
@@ -74,7 +74,7 @@ class Player:
             if abs(self.lean_angle) >= self.max_lean:
                 self.lean_angle = (self.max_lean) * self.lean_direction
                 self.lean_direction *= -1  # Reverse direction
-                self.lean_speed = max(self.lean_speed * 0.75, 0.5)
+                self.lean_speed = max(self.lean_speed * 0.65, 0.6)
                 self.change_max_angle = True
 
     def update_position(self):
@@ -127,25 +127,43 @@ class Player:
 
         return False
 
-    def apply_knockback(self, angle):
-        # Convert angle to radians and calculate knockback velocity
-        knockback_x = -math.cos(angle) * 10
-        knockback_y = -math.sin(angle) * 50  # Negative because screen y increases downward
+    def apply_knockback(self, angle, x_force=10.0, y_force=30.0, change_angle=True):
+        knockback_x = -math.cos(angle) * x_force
+        knockback_y = -math.sin(angle) * y_force
 
         self.vel_x += knockback_x
         self.vel_y += knockback_y
-        self.on_ground = False  # Ensure gravity continues to act
-
-        # Lean away from bullet angle
-        direction = -1 if knockback_x > 0 else 1  # If hit from left, lean right, and vice versa
-        self.lean_angle = direction * 20  # Start at a noticeable lean
-        self.lean_direction = -direction  # Begin leaning back the other way
-        self.lean_speed = abs(self.lean_angle) * 0.15  # Lean speed similar to jump
-        self.max_lean = abs(self.lean_angle) + 30
-        self.change_max_angle = False
-
+        self.on_ground = False
+        if change_angle:
+            direction = -1 if knockback_x > 0 else 1
+            self.lean_angle = direction * 20
+            self.lean_direction = -direction
+            self.lean_speed = abs(self.lean_angle) * 0.15
+            self.max_lean = abs(self.lean_angle) + 40
+            self.change_max_angle = False
         print(f"Knockback applied: vx={self.vel_x:.2f}, vy={self.vel_y:.2f}, lean={self.lean_angle}")
 
+    def handle_collision_with(self, other):
+        """Push the other player if this player collides with them, and apply leaning."""
+        # Simple AABB collision detection
+        if (
+                self.x < other.x + other.width and
+                self.x + self.width > other.x and
+                self.y < other.y + other.height and
+                self.y + self.height > other.y
+        ):
+            # Calculate overlap
+            overlap_x = (self.x + self.width / 2) - (other.x + other.width / 2)
+            push_dir = 1 if overlap_x > 0 else -1
+            push_amount = (self.width + other.width) / 2 - abs(overlap_x)
+
+            # Push both players apart
+            self.x += push_dir * push_amount / 2
+            other.x -= push_dir * push_amount / 2
+
+            # Apply horizontal knockback to the other player
+            knockback_force = 2.5
+            self.apply_knockback(0, other.vel_x * 10, 1, False)
     def get_data(self):
         return {
             "x": self.x,
