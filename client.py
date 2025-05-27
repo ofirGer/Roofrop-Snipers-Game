@@ -5,6 +5,8 @@ import player
 import gun
 import config
 import protocol
+import camera
+
 
 class GameClient:
     def __init__(self):
@@ -14,6 +16,7 @@ class GameClient:
         self.running = True
         self.connected = False
         self.connect_to_server()
+        self.camera = camera.Camera()
 
     def connect_to_server(self):
         try:
@@ -37,7 +40,7 @@ class GameClient:
                 pygame.display.set_caption(f"Rooftop Snipers - Player  {int(self.player_id) + 1}")
                 self.clock = pygame.time.Clock()
 
-                self.local_player = player.Player(config.ROOF_X + 20, config.ROOF_Y)
+                self.local_player = player.Player(config.ROOF_X + 350, config.ROOF_Y)
                 self.local_gun = gun.Gun(self.local_player, self.screen)
 
                 self.enemy_player = player.Player(config.ROOF_X + config.ROOF_WIDTH - 70, config.ROOF_Y)
@@ -89,15 +92,20 @@ class GameClient:
 
     def draw(self):
         self.screen.fill(config.BACKGROUND_COLOR)
-        pygame.draw.rect(
-            self.screen, config.ROOF_COLOR,
-            (config.ROOF_X, config.ROOF_Y, config.ROOF_WIDTH, config.ROOF_HEIGHT)
-        )
-        self.local_player.draw(self.screen)
-        self.local_gun.draw()
-        self.enemy_player.draw(self.screen, mirror=True)
+
+        self.camera.update((self.local_player.x, self.local_player.y), (self.enemy_player.x, self.enemy_player.y))
+
+        # Draw roof
+        roof_rect = pygame.Rect(config.ROOF_X, config.ROOF_Y, config.ROOF_WIDTH, config.ROOF_HEIGHT)
+        pygame.draw.rect(self.screen, config.ROOF_COLOR, self.camera.apply_rect(roof_rect))
+
+        # Draw players and guns using transformed coordinates
+        self.local_player.draw(self.screen, camera=self.camera)
+        self.local_gun.draw(camera=self.camera)
+        self.enemy_player.draw(self.screen, mirror=True, camera=self.camera)
         self.enemy_gun.update_position()
-        self.enemy_gun.draw()
+        self.enemy_gun.draw(camera=self.camera)
+
         pygame.display.flip()
 
     def run(self):

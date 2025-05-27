@@ -79,22 +79,29 @@ class Gun:
                 if self.current_bullet_frame >= len(self.bullet_frames):
                     self.firing = False
 
-    def draw_bullet(self):
+    def draw_bullet(self, camera=None):
         if self.firing:
             frame = self.bullet_frames[self.current_bullet_frame]
-            pivot = [self.x, self.y]
+            pivot = pygame.math.Vector2(self.x, self.y)
             offset = pygame.math.Vector2(0, 390)
 
             rotated_frame = pygame.transform.rotozoom(frame, self.bullet_angle, 1)
             rotated_offset = offset.rotate(-self.bullet_angle)
-            rect = rotated_frame.get_rect(center=pivot + rotated_offset)
+            bullet_pos = pivot + rotated_offset
+
+            if camera:
+                bullet_pos = camera.apply(bullet_pos)
+                rotated_frame = camera.apply_surface(rotated_frame)
+
+            rect = rotated_frame.get_rect(center=bullet_pos)
             self.screen.blit(rotated_frame, rect)
 
-    def draw(self):
-        self.draw_bullet()
+    def draw(self, camera=None):
+        self.draw_bullet(camera=camera)  # Assuming draw_bullet will also need camera
 
         pivot = [self.x, self.y]
         offset = pygame.math.Vector2(0, 17)
+
         if self.mirror:
             image = pygame.transform.flip(self.image, True, False)
             rotated_image = pygame.transform.rotozoom(image, -self.angle, 1)
@@ -103,7 +110,15 @@ class Gun:
             rotated_image = pygame.transform.rotozoom(self.image, self.angle, 1)
             rotated_offset = offset.rotate(-self.angle)
 
-        rect = rotated_image.get_rect(center=(pivot[0] + rotated_offset.x, pivot[1] + rotated_offset.y))
+        draw_x = pivot[0] + rotated_offset.x
+        draw_y = pivot[1] + rotated_offset.y
+
+        # Apply camera offset and zoom
+        if camera:
+            draw_x, draw_y = camera.apply((draw_x, draw_y))
+            rotated_image = camera.apply_surface(rotated_image)
+
+        rect = rotated_image.get_rect(center=(draw_x, draw_y))
         self.screen.blit(rotated_image, rect)
 
     def apply_gun_movement(self):
