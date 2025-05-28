@@ -4,8 +4,9 @@ import math
 
 
 class Player:
-    def __init__(self, x, y):
-        self.image = pygame.image.load("assets/player.png")
+    def __init__(self, x, y, player_id):
+        self.id = player_id
+        self.image = pygame.image.load(f"assets/player{self.id + 1}.png")
         self.width, self.height = self.image.get_size()
         self.x = x
         self.y = y - self.height  # Adjust to sit on the roof
@@ -30,7 +31,7 @@ class Player:
             # Apply horizontal jump direction based on lean angle
             jump_direction = -1 if self.lean_angle > 0 else 1
             self.vel_y = self.jump_strength
-            self.vel_x = jump_direction * abs(self.lean_angle) * 0.2  # Horizontal movement smoothened
+            self.vel_x = jump_direction * abs(self.lean_angle) * 0.1  # Horizontal movement smoothened
             self.on_ground = False
             # reset leaning
             self.max_lean = abs(self.lean_angle) + 40
@@ -132,7 +133,7 @@ class Player:
 
         return False
 
-    def apply_knockback(self, angle, x_force=10.0, y_force=30.0, change_angle=True):
+    def apply_knockback(self, angle, x_force=10.0, y_force=60.0, change_angle=True):
         knockback_x = -math.cos(angle) * x_force
         knockback_y = -math.sin(angle) * y_force
 
@@ -164,11 +165,9 @@ class Player:
 
             # Push both players apart
             self.x += push_dir * push_amount / 2
-            other.x -= push_dir * push_amount / 2
 
-            # Apply horizontal knockback to the other player
-            knockback_force = 2.5
-            self.apply_knockback(0, other.vel_x * 10, 1, False)
+
+
     def get_data(self):
         return {
             "x": self.x,

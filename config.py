@@ -9,9 +9,9 @@ ROOF_COLOR = (0, 0, 0)  # Black
 
 # Roof settings
 ROOF_WIDTH = 1100
-ROOF_HEIGHT = HEIGHT // 3
+ROOF_HEIGHT = 500
 ROOF_X = (WIDTH - ROOF_WIDTH) // 2
-ROOF_Y = HEIGHT - ROOF_HEIGHT
+ROOF_Y = HEIGHT - ROOF_HEIGHT + 300
 
 # Game settings
 FPS = 60

@@ -17,6 +17,13 @@ class GameClient:
         self.connected = False
         self.connect_to_server()
         self.camera = camera.Camera()
+        self.roof_image = pygame.image.load("assets/roof.png").convert_alpha()
+
+        self.player1_score = 0
+        self.player2_score = 0
+        self.score_to_win = 5
+        self.game_over = False
+        self.font = pygame.font.SysFont(None, 48)
 
     def connect_to_server(self):
         try:
@@ -40,11 +47,11 @@ class GameClient:
                 pygame.display.set_caption(f"Rooftop Snipers - Player  {int(self.player_id) + 1}")
                 self.clock = pygame.time.Clock()
 
-                self.local_player = player.Player(config.ROOF_X + 350, config.ROOF_Y)
-                self.local_gun = gun.Gun(self.local_player, self.screen)
+                self.local_player = player.Player(config.ROOF_X + 350, config.ROOF_Y, int(self.player_id))
+                self.local_gun = gun.Gun(self.local_player, self.screen, int(self.player_id))
 
-                self.enemy_player = player.Player(config.ROOF_X + config.ROOF_WIDTH - 70, config.ROOF_Y)
-                self.enemy_gun = gun.Gun(self.enemy_player, self.screen, mirror=True)
+                self.enemy_player = player.Player(config.ROOF_X + config.ROOF_WIDTH - 70, config.ROOF_Y, 1 - int(self.player_id))
+                self.enemy_gun = gun.Gun(self.enemy_player, self.screen, 1- int(self.player_id), mirror=True)
 
         except Exception as e:
             print(f"Failed to connect to server: {e}")
@@ -89,6 +96,43 @@ class GameClient:
         self.local_player.apply_movement()
         self.local_gun.apply_gun_movement()
         self.local_player.handle_collision_with(self.enemy_player)
+        # Check if a player fell off the roof
+        fall_threshold = config.ROOF_Y + 400
+        if not self.game_over:
+            if self.local_player.y >= fall_threshold:
+                self.player2_score += 1
+                self.check_win()
+            elif self.enemy_player.y >= fall_threshold - 20:
+                self.player1_score += 1
+                self.check_win()
+
+    def check_win(self):
+        if self.player1_score >= self.score_to_win:
+            #self.game_over = True
+            self.display_win("Player 1")
+        elif self.player2_score >= self.score_to_win:
+            #self.game_over = True
+            self.display_win("Player 2")
+        else:
+            # Pause briefly before resetting round
+            pygame.time.delay(1000)
+            self.reset_round()
+
+    def reset_round(self):
+        self.local_player.x = config.ROOF_X + 350
+        self.local_player.y = config.ROOF_Y
+        self.local_player.vel_x = 0
+        self.local_player.vel_y = 0
+        self.local_player.lean_angle = 0
+        self.local_player.lean_speed = 0
+        self.local_player.change_max_angle = False
+        self.local_player.on_ground = True
+
+    def display_win(self, winner):
+        win_text = self.font.render(f"{winner} Wins!", True, (255, 215, 0))
+        self.screen.blit(win_text, (config.WIDTH // 2 - win_text.get_width() // 2, config.HEIGHT // 2))
+        pygame.display.flip()
+        pygame.time.wait(3000)
 
     def draw(self):
         self.screen.fill(config.BACKGROUND_COLOR)
@@ -96,8 +140,9 @@ class GameClient:
         self.camera.update((self.local_player.x, self.local_player.y), (self.enemy_player.x, self.enemy_player.y))
 
         # Draw roof
-        roof_rect = pygame.Rect(config.ROOF_X, config.ROOF_Y, config.ROOF_WIDTH, config.ROOF_HEIGHT)
-        pygame.draw.rect(self.screen, config.ROOF_COLOR, self.camera.apply_rect(roof_rect))
+        roof_pos = self.camera.apply((config.ROOF_X, config.ROOF_Y))
+        roof_scaled = self.camera.apply_surface(self.roof_image)
+        self.screen.blit(roof_scaled, roof_pos)
 
         # Draw players and guns using transformed coordinates
         self.local_player.draw(self.screen, camera=self.camera)
@@ -105,8 +150,10 @@ class GameClient:
         self.enemy_player.draw(self.screen, mirror=True, camera=self.camera)
         self.enemy_gun.update_position()
         self.enemy_gun.draw(camera=self.camera)
-
+        score_text = self.font.render(f"{self.player1_score} : {self.player2_score}", True, (255, 255, 255))
+        self.screen.blit(score_text, (config.WIDTH // 2 - score_text.get_width() // 2, 20))
         pygame.display.flip()
+
 
     def run(self):
         if not self.connected:

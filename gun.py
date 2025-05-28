@@ -1,10 +1,13 @@
 import pygame
 
 class Gun:
-    def __init__(self, player1, screen, mirror=False):
-        self.image = pygame.image.load("assets/arm.png").convert_alpha()
+    def __init__(self, player1, screen,id, mirror=False):
+        self.id = id
+        self.image = pygame.image.load(f"assets/arm{self.id + 1}.png").convert_alpha()
         self.mirror = mirror
         self.bullet_frames = [pygame.image.load(f"assets/bullets/bullet{i}.png").convert_alpha() for i in range(1, 7)]
+        for i in range(0, 6):
+            self.bullet_frames[i] = pygame.transform.scale(self.bullet_frames[i], (4, 1500))
         self.bullet_angle = 0
 
         self.screen = screen
@@ -24,10 +27,10 @@ class Gun:
 
     def update_position(self):
         # You can move the enemy hand more rightward by increasing x_offset when mirrored
-        x_offset = 22
+        x_offset = 15
         y_offset = 45
         if self.mirror:
-            x_offset += 15  # Move hand 15 pixels to the right for mirrored player
+            x_offset += 10  # Move hand 15 pixels to the right for mirrored player
 
         self.x = self.player1.x + x_offset
         self.y = self.player1.y + y_offset
@@ -83,7 +86,7 @@ class Gun:
         if self.firing:
             frame = self.bullet_frames[self.current_bullet_frame]
             pivot = pygame.math.Vector2(self.x, self.y)
-            offset = pygame.math.Vector2(0, 390)
+            offset = pygame.math.Vector2(0, 650)
 
             rotated_frame = pygame.transform.rotozoom(frame, self.bullet_angle, 1)
             rotated_offset = offset.rotate(-self.bullet_angle)
