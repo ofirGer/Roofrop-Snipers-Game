@@ -1,6 +1,7 @@
 # protocol_server.py
 import pickle
 
+
 class Protocol:
     def __init__(self, socket):
         self.socket = socket

@@ -24,6 +24,7 @@ class Player:
         self.change_max_angle = False
         self.recently_hit = False
         self.hit_cooldown = 0  # frames remaining until allowed to be hit again
+        self.out_of_roof = False
 
     def jump(self):
         """Make the player jump if on the ground and lean direction is considered."""
@@ -111,6 +112,12 @@ class Player:
         elif self.on_ground:
             self.vel_x = 0  # Snap to zero to avoid endless tiny sliding
 
+        fall_threshold = config.ROOF_Y + 400
+        if self.y >= fall_threshold:
+            self.out_of_roof = True
+        else:
+            self.out_of_roof = False
+
     def check_hit_by_bullet(self, gun):
         """Check if this player is hit by the first frame of the opponent's bullet animation."""
         if self.recently_hit:
@@ -166,11 +173,10 @@ class Player:
             # Push both players apart
             self.x += push_dir * push_amount / 2
 
-
-
     def get_data(self):
         return {
             "x": self.x,
             "y": self.y,
             "lean_angle": self.lean_angle,
+            "out_of_roof": self.out_of_roof,
         }

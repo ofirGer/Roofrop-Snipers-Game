@@ -25,6 +25,8 @@ class GameClient:
         self.game_over = False
         self.font = pygame.font.SysFont(None, 48)
 
+        self.local_player_out = False
+
     def connect_to_server(self):
         try:
             self.client_socket.connect((config.SERVER_IP, config.PORT))
@@ -74,6 +76,7 @@ class GameClient:
                     self.enemy_player.x = config.WIDTH - original_x - self.enemy_player.width
                     self.enemy_player.y = enemy_data["player"]["y"]
                     self.enemy_player.lean_angle = -enemy_data["player"]["lean_angle"]
+                    self.enemy_player.out_of_roof = enemy_data["player"]["out_of_roof"]
 
                 if "gun" in enemy_data:
                     self.enemy_gun.angle = enemy_data["gun"]["angle"]
@@ -96,13 +99,13 @@ class GameClient:
         self.local_player.apply_movement()
         self.local_gun.apply_gun_movement()
         self.local_player.handle_collision_with(self.enemy_player)
+        self.send_and_receive_data()
         # Check if a player fell off the roof
-        fall_threshold = config.ROOF_Y + 400
         if not self.game_over:
-            if self.local_player.y >= fall_threshold:
+            if self.local_player.out_of_roof:
                 self.player2_score += 1
                 self.check_win()
-            elif self.enemy_player.y >= fall_threshold - 20:
+            elif self.enemy_player.out_of_roof:
                 self.player1_score += 1
                 self.check_win()
 
@@ -127,6 +130,8 @@ class GameClient:
         self.local_player.lean_speed = 0
         self.local_player.change_max_angle = False
         self.local_player.on_ground = True
+        self.local_player.out_of_roof = False
+
 
     def display_win(self, winner):
         win_text = self.font.render(f"{winner} Wins!", True, (255, 215, 0))
@@ -162,10 +167,11 @@ class GameClient:
         while self.running:
             self.clock.tick(config.FPS)
             self.handle_events()
-            self.update_game_logic()
-            self.send_and_receive_data()
-            self.draw()
             self.local_player.check_hit_by_bullet(self.enemy_gun)
+           # self.send_and_receive_data()
+            self.update_game_logic()
+            self.draw()
+
         pygame.quit()
 
 if __name__ == "__main__":
