@@ -173,10 +173,11 @@ class Player:
             # Push both players apart
             self.x += push_dir * push_amount / 2
 
-    def get_data(self):
+    def get_data(self, score):
         return {
             "x": self.x,
             "y": self.y,
             "lean_angle": self.lean_angle,
             "out_of_roof": self.out_of_roof,
+            "score": score,
         }
