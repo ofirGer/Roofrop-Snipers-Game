@@ -1,20 +1,18 @@
+import socket
 from rpi_lcd import LCD
-from threading import Lock
 
+lcd = LCD()
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock.bind(("0.0.0.0", 6000))
 
-class ScoreDisplay:
-    def __init__(self):
-        self.lcd = LCD()
-        self.lock = Lock()
+print("Listening for score updates...")
 
-    def update(self, player1_score, player2_score):
-        with self.lock:
-            try:
-                self.lcd.text(f"GAME SCORE:", 1)
-                self.lcd.text(f"P1: {player1_score} | P2: {player2_score}", 2)
-            except Exception as e:
-                print(f"Failed to update LCD: {e}")
-
-    def clear(self):
-        with self.lock:
-            self.lcd.clear()
+try:
+    while True:
+        data, addr = sock.recvfrom(1024)
+        score = data.decode()
+        lcd.text("Score:", 1)
+        lcd.text(score, 2)
+except KeyboardInterrupt:
+    lcd.clear()
+    sock.close()

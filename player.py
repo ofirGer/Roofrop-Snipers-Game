@@ -179,5 +179,5 @@ class Player:
             "y": self.y,
             "lean_angle": self.lean_angle,
             "out_of_roof": self.out_of_roof,
-            "score": score,
+            "score" : score,
         }

@@ -2,11 +2,7 @@ import pickle
 import socket
 import threading
 import protocol
-import signal
-import sys
-
-from score_display import ScoreDisplay
-
+import config
 
 class GameServer:
     def __init__(self, host="0.0.0.0", port=5555):
@@ -23,17 +19,24 @@ class GameServer:
         self.player_count = 0
         self.player1_score = 0
         self.player2_score = 0
+        self.last_sent_score = ""
 
-        self.display = ScoreDisplay()  # <-- LCD display instance
-
-        # Register signal handler to clean up LCD on exit
-        signal.signal(signal.SIGINT, self.handle_exit)
-        signal.signal(signal.SIGTERM, self.handle_exit)
-
-    def handle_exit(self, sig, frame):
-        print("Exiting. Clearing LCD...")
-        self.display.clear()
-        sys.exit(0)
+    def send_scores_to_pi(self):
+        current_score = f"P1: {self.player1_score} | P2: {self.player2_score}"
+        if current_score == self.last_sent_score:
+            return  # Don't send if score hasn't changed
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+                s.connect((config.RASP_IP, config.RASP_port))
+                message = f"P1: {self.player1_score} | P2: {self.player2_score}"
+                if self.player1_score == 5:
+                    message = "Player 1 Wins!"
+                elif self.player2_score == 5:
+                    message = "Player 2 Wins!"
+                s.sendto(message.encode(), (config.RASP_IP, config.RASP_port))
+                self.last_sent_score = current_score
+        except Exception as e:
+            print(f"Failed to send score to Pi: {e}")
 
     def handle_client(self, client_socket, player_id):
         print(f"Player {player_id} connected.")
@@ -68,8 +71,8 @@ class GameServer:
                 else:
                     self.player1_score = data["player"]["score"]
 
-                # Print scores and update LCD
-                self.display.update(self.player1_score, self.player2_score)
+                # Send score to Raspberry Pi
+                self.send_scores_to_pi()
 
                 pro.send_data(pickle.dumps(enemy_data))
 
