@@ -112,10 +112,10 @@ class GameClient:
 
     def check_win(self):
         if self.local_score >= self.score_to_win:
-            # self.game_over = True
+            self.game_over = True
             self.display_win("Player 1")
-        elif self.local_score >= self.score_to_win:
-            # self.game_over = True
+        elif self.enemy_score >= self.score_to_win:
+            self.game_over = True
             self.display_win("Player 2")
         else:
             # Pause briefly before resetting round
@@ -169,7 +169,9 @@ class GameClient:
             self.handle_events()
             self.local_player.check_hit_by_bullet(self.enemy_gun)
             self.update_game_logic()
-            self.draw()
+            if not self.game_over:
+
+                self.draw()
 
         pygame.quit()
 

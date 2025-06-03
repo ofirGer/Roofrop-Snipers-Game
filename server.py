@@ -2,6 +2,10 @@ import pickle
 import socket
 import threading
 import protocol
+import signal
+import sys
+
+from score_display import ScoreDisplay
 
 
 class GameServer:
@@ -17,6 +21,19 @@ class GameServer:
         self.connected_event = threading.Event()
         self.connected_clients = [None, None]
         self.player_count = 0
+        self.player1_score = 0
+        self.player2_score = 0
+
+        self.display = ScoreDisplay()  # <-- LCD display instance
+
+        # Register signal handler to clean up LCD on exit
+        signal.signal(signal.SIGINT, self.handle_exit)
+        signal.signal(signal.SIGTERM, self.handle_exit)
+
+    def handle_exit(self, sig, frame):
+        print("Exiting. Clearing LCD...")
+        self.display.clear()
+        sys.exit(0)
 
     def handle_client(self, client_socket, player_id):
         print(f"Player {player_id} connected.")
@@ -45,6 +62,15 @@ class GameServer:
 
                 self.players_data[player_id] = data
                 enemy_data = self.players_data[1 - player_id]
+
+                if player_id == 0:
+                    self.player2_score = data["player"]["score"]
+                else:
+                    self.player1_score = data["player"]["score"]
+
+                # Print scores and update LCD
+                self.display.update(self.player1_score, self.player2_score)
+
                 pro.send_data(pickle.dumps(enemy_data))
 
         except Exception as e:
