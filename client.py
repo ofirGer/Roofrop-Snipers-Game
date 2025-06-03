@@ -131,6 +131,7 @@ class GameClient:
         self.local_player.change_max_angle = False
         self.local_player.on_ground = True
         self.local_player.out_of_roof = False
+        self.enemy_player.out_of_roof = False
 
 
     def display_win(self, winner):

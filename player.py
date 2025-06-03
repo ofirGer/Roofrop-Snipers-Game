@@ -113,9 +113,9 @@ class Player:
             self.vel_x = 0  # Snap to zero to avoid endless tiny sliding
 
         fall_threshold = config.ROOF_Y + 400
-        if self.y >= fall_threshold:
+        if self.y >= fall_threshold and not self.out_of_roof:
             self.out_of_roof = True
-        else:
+        elif self.out_of_roof:
             self.out_of_roof = False
 
     def check_hit_by_bullet(self, gun):
