@@ -24,7 +24,7 @@ class GameClient:
         self.enemy_score = 0
         self.score_to_win = 5
         self.game_over = False
-        self.font = pygame.font.SysFont(None, 48)
+        self.font = pygame.font.Font("assets/fonts/pixel_font.ttf", 64)
 
     def connect_to_server(self):
         try:
@@ -156,8 +156,22 @@ class GameClient:
         self.enemy_player.draw(self.screen, mirror=True, camera=self.camera)
         self.enemy_gun.update_position()
         self.enemy_gun.draw(camera=self.camera)
-        score_text = self.font.render(f"{self.local_score} : {self.enemy_score}", True, (255, 255, 255))
-        self.screen.blit(score_text, (config.WIDTH // 2 - score_text.get_width() // 2, 20))
+
+        # Render score components separately
+        local_score_text = self.font.render(str(self.local_score), True, (0, 0, 128))  # Blue
+        colon_text = self.font.render(" : ", True, (255, 255, 255))  # White
+        enemy_score_text = self.font.render(str(self.enemy_score), True, (179, 0, 0))  # Red
+
+        # Calculate total width and position
+        total_width = local_score_text.get_width() + colon_text.get_width() + enemy_score_text.get_width()
+        x = (config.WIDTH - total_width) // 2
+        y = 20  # Adjust vertical position as needed
+
+        # Blit texts
+        self.screen.blit(local_score_text, (x, y))
+        self.screen.blit(colon_text, (x + local_score_text.get_width(), y))
+        self.screen.blit(enemy_score_text, (x + local_score_text.get_width() + colon_text.get_width(), y))
+
         pygame.display.flip()
 
     def run(self):

@@ -27,13 +27,14 @@ class GameServer:
             return  # Don't send if score hasn't changed
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+                pro = protocol.Protocol(s)
                 s.connect((config.RASP_IP, config.RASP_port))
                 message = f"P1: {self.player1_score} | P2: {self.player2_score}"
                 if self.player1_score == 5:
                     message = "Player 1 Wins!"
                 elif self.player2_score == 5:
                     message = "Player 2 Wins!"
-                s.sendto(message.encode(), (config.RASP_IP, config.RASP_port))
+                pro.send_udp_data(message.encode(), config.RASP_IP, config.RASP_port)
                 self.last_sent_score = current_score
         except Exception as e:
             print(f"Failed to send score to Pi: {e}")
@@ -72,7 +73,7 @@ class GameServer:
                     self.player1_score = data["player"]["score"]
 
                 # Send score to Raspberry Pi
-                self.send_scores_to_pi()
+                #self.send_scores_to_pi()
 
                 pro.send_data(pickle.dumps(enemy_data))
 
